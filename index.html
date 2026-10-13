@@ -57,7 +57,7 @@
 
     .top-band {
       height: 10px;
-      background: linear-gradient(90deg, var(--accent) 0%, #f3b23a 38%, var(--tamborim) 100%);
+      background: linear-gradient(90deg, #e85d04 0%, #0f8572 50%, #2563eb 100%);
     }
 
     .shell {
@@ -104,6 +104,10 @@
       font-size: clamp(2rem, 4vw, 3.3rem);
       line-height: 0.98;
       letter-spacing: -0.04em;
+      background: linear-gradient(120deg, #e85d04 10%, #2563eb 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
     .subtitle {
@@ -173,14 +177,14 @@
       appearance: none;
       border: 0;
       border-radius: 999px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      background: linear-gradient(120deg, #e85d04 0%, #2563eb 100%);
       color: #fff7eb;
       font-size: 1rem;
       font-weight: 700;
       padding: 16px 28px;
       cursor: pointer;
       min-width: 148px;
-      box-shadow: 0 14px 28px rgba(153, 45, 18, 0.22);
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
       transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
     }
 
@@ -358,7 +362,7 @@
     .transport:hover,
     .transport:focus-visible {
       transform: translateY(-1px);
-      box-shadow: 0 18px 34px rgba(153, 45, 18, 0.24);
+      box-shadow: 0 18px 34px rgba(37, 99, 235, 0.28);
       filter: saturate(1.05);
       outline: none;
     }
@@ -955,15 +959,25 @@
     }
 
     .landing-instruments {
-      display: flex;
-      gap: 20px;
-      align-items: flex-end;
+      display: grid;
+      grid-template-columns: repeat(2, 96px);
+      gap: 14px;
       margin: 12px 0 4px;
     }
 
-    .landing-instruments svg {
-      width: 54px;
-      height: 54px;
+    .landing-tile {
+      width: 96px;
+      height: 96px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+    }
+
+    .landing-tile svg {
+      width: 58px;
+      height: 58px;
     }
 
     .landing-divider {
@@ -1015,28 +1029,52 @@
 
       <div class="landing-instruments" aria-hidden="true">
         <!-- Surdo -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-          <rect x="10" y="18" width="44" height="26" rx="5" fill="#e85d04" opacity="0.85"/>
-          <ellipse cx="32" cy="18" rx="22" ry="8" fill="#e85d04"/>
-          <rect x="10" y="29" width="44" height="3" fill="#0a0a0a" opacity="0.25"/>
-        </svg>
+        <div class="landing-tile">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+            <path d="M12 20 h40 v22 a20 7 0 0 1 -40 0 z" fill="#e85d04" opacity="0.9"/>
+            <ellipse cx="32" cy="20" rx="20" ry="7" fill="#e85d04"/>
+            <ellipse cx="32" cy="20" rx="14" ry="4.5" fill="#0a0a0a" opacity="0.2"/>
+            <ellipse cx="32" cy="20" rx="20" ry="7" fill="none" stroke="#0a0a0a" stroke-opacity="0.25" stroke-width="1.5"/>
+            <path d="M16 24 v12 M24 26 v14 M32 27 v15 M40 26 v14 M48 24 v12" stroke="#0a0a0a" stroke-opacity="0.3" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
         <!-- Tamborim -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-          <circle cx="32" cy="32" r="21" fill="none" stroke="#0f8572" stroke-width="7"/>
-          <circle cx="32" cy="32" r="15" fill="#0f8572" opacity="0.55"/>
-        </svg>
+        <div class="landing-tile">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+            <circle cx="30" cy="32" r="20" fill="none" stroke="#0f8572" stroke-width="7"/>
+            <circle cx="30" cy="32" r="16" fill="#0f8572" opacity="0.45"/>
+            <circle cx="30" cy="32" r="16" fill="none" stroke="#0f8572" stroke-width="2"/>
+            <g fill="#0f8572">
+              <circle cx="30" cy="12.5" r="2.2"/>
+              <circle cx="49.5" cy="32" r="2.2"/>
+              <circle cx="30" cy="51.5" r="2.2"/>
+              <circle cx="10.5" cy="32" r="2.2"/>
+            </g>
+            <line x1="46" y1="14" x2="55" y2="9" stroke="#0f8572" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+            <circle cx="56.5" cy="8" r="3" fill="#0f8572" opacity="0.8"/>
+          </svg>
+        </div>
         <!-- Caixa -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-          <rect x="12" y="22" width="40" height="18" rx="4" fill="#2f5c9a" opacity="0.85"/>
-          <ellipse cx="32" cy="22" rx="20" ry="7" fill="#2f5c9a"/>
-          <path d="M15 32 H49 M15 37 H49" stroke="#0a0a0a" stroke-width="2" opacity="0.3"/>
-        </svg>
+        <div class="landing-tile">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+            <path d="M12 24 h40 v12 a20 6 0 0 1 -40 0 z" fill="#2f5c9a" opacity="0.9"/>
+            <ellipse cx="32" cy="24" rx="20" ry="6.5" fill="#2f5c9a"/>
+            <ellipse cx="32" cy="24" rx="13" ry="4" fill="#0a0a0a" opacity="0.2"/>
+            <ellipse cx="32" cy="24" rx="20" ry="6.5" fill="none" stroke="#0a0a0a" stroke-opacity="0.25" stroke-width="1.5"/>
+            <path d="M14 31 h36 M15 34.5 h34" stroke="#0a0a0a" stroke-opacity="0.35" stroke-width="1.6"/>
+            <path d="M17 27 v8 M25 28.5 v9 M39 28.5 v9 M47 27 v8" stroke="#0a0a0a" stroke-opacity="0.3" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
         <!-- Agogô -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-          <path d="M10 48 L12.5 33 C13.5 24 19 19 25 19 C31 19 36.5 24 37.5 33 L40 48 Z" fill="#2563eb"/>
-          <path d="M36 40 L37.5 30 C38 24 41.5 21 45.5 21 C49.5 21 53 24 53.5 30 L55 40 Z" fill="#2563eb" opacity="0.8"/>
-          <path d="M28 19 Q32 13 40 17" stroke="#2563eb" stroke-width="3" fill="none" stroke-linecap="round"/>
-        </svg>
+        <div class="landing-tile">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+            <path d="M8 50 C10 44 11 36 12.5 30 C14 22 19 17 25 17 C31 17 36 22 37.5 30 C39 36 40 44 42 50 C38 52 34 53 25 53 C16 53 12 52 8 50 Z" fill="#2563eb"/>
+            <path d="M11 49 C16 51 34 51 39 49 C34 47.5 16 47.5 11 49 Z" fill="#0a0a0a" opacity="0.25"/>
+            <path d="M38 42 C39 38 40 32 41 28 C42 22 45 19 48.5 19 C52 19 55 22 56 28 C57 32 58 38 59 42 C56 43.5 53 44 48.5 44 C44 44 41 43.5 38 42 Z" fill="#2563eb" opacity="0.8"/>
+            <path d="M40.5 41 C44 42.5 53 42.5 56.5 41 C53 40 44 40 40.5 41 Z" fill="#0a0a0a" opacity="0.25"/>
+            <path d="M22 17 C26 11 34 11 40 16" stroke="#2563eb" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
       </div>
 
       <hr class="landing-divider" />
