@@ -1,0 +1,2570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batería Escuela de Aprendices</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --panel: rgba(20, 20, 20, 0.88);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #ededed;
+      --muted: #a1a1aa;
+      --accent: #e85d04;
+      --accent-strong: #ff7b1a;
+      --surdo: #93440f;
+      --tamborim: #0f8572;
+      --caixa: #2f5c9a;
+      --agogo: #7a4ea3;
+      --step-off: rgba(255, 255, 255, 0.08);
+      --step-on: #ededed;
+      --step-playing: #ffd36b;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(232, 93, 4, 0.14), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(15, 133, 114, 0.12), transparent 28%),
+        linear-gradient(145deg, #0a0a0a 0%, #101010 45%, #0a0a0a 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1120px, 100%);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--panel-border);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .top-band {
+      height: 10px;
+      background: linear-gradient(90deg, var(--accent) 0%, #f3b23a 38%, var(--tamborim) 100%);
+    }
+
+    .shell {
+      padding: 28px;
+      display: grid;
+      gap: 26px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .title-wrap {
+      display: grid;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 0.76rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+      font-weight: 700;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-cubes {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 62ch;
+    }
+
+    .pulse-card {
+      justify-self: end;
+      min-width: 260px;
+      padding: 18px 20px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: 12px;
+    }
+
+    .pulse-label {
+      margin: 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    .pulse-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .led {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: #3f3f46;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    .led.pulse {
+      background: #41d46b;
+      transform: scale(1.22);
+      box-shadow: 0 0 0 7px rgba(65, 212, 107, 0.18), 0 0 18px rgba(65, 212, 107, 0.58);
+    }
+
+    .pulse-status {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 20px;
+      align-items: center;
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .transport {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      color: #fff7eb;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 28px;
+      cursor: pointer;
+      min-width: 148px;
+      box-shadow: 0 14px 28px rgba(153, 45, 18, 0.22);
+      transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+    }
+
+    .preset-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .preset-copy {
+      display: grid;
+      gap: 8px;
+    }
+
+    .preset-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .preset-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .preset-select {
+      appearance: none;
+      min-width: 260px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      background: #141414;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      padding: 14px 16px;
+    }
+
+    .ghost-button {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      background: #141414;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .ghost-button:hover,
+    .ghost-button:focus-visible,
+    .preset-select:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(0, 0, 0, 0.45);
+      background: #1c1c1c;
+    }
+    
+    .utility-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 18px;
+      align-items: start;
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .exchange-panel,
+    .practice-panel {
+      display: grid;
+      gap: 12px;
+    }
+    
+    .exchange-panel p,
+    .practice-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .tap-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .tap-grid {
+      display: grid;
+      grid-template-columns: repeat(16, minmax(18px, 1fr));
+      gap: 6px;
+    }
+
+    .tap-grid span {
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    .tap-grid span.is-active {
+      background: linear-gradient(180deg, #ffda8e 0%, #cc4b1f 100%);
+      transform: translateY(-1px);
+    }
+
+    .tap-grid span.out-of-bar {
+      opacity: 0.22;
+    }
+    
+    .exchange-textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      background: #141414;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.45;
+      padding: 14px 16px;
+    }
+    
+    .exchange-textarea:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.15);
+      border-color: rgba(232, 93, 4, 0.45);
+    }
+    
+    .exchange-actions,
+    .practice-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(232, 93, 4, 0.15);
+      color: var(--accent-strong);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    
+    .status-chip.is-ready {
+      background: rgba(15, 133, 114, 0.14);
+      color: #34d399;
+    }
+
+    .status-chip.is-neutral {
+      background: rgba(47, 92, 154, 0.14);
+      color: #8ab4e8;
+    }
+    
+    .practice-toggle.is-active {
+      background: linear-gradient(135deg, #0f8572 0%, #075649 100%);
+      color: #f3fffb;
+      border-color: transparent;
+    }
+
+    .transport:hover,
+    .transport:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 34px rgba(153, 45, 18, 0.24);
+      filter: saturate(1.05);
+      outline: none;
+    }
+
+    .tempo {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tempo-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tempo-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .tempo-top strong {
+      font-size: 1rem;
+    }
+
+    .signature-select {
+      appearance: none;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      background: #141414;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      padding: 14px 16px;
+    }
+
+    .tempo-value {
+      font-size: 1.2rem;
+      color: var(--accent-strong);
+      font-weight: 800;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      appearance: none;
+      background: transparent;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(232, 93, 4, 0.35) 0%, rgba(15, 133, 114, 0.35) 100%);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      margin-top: -7px;
+      border-radius: 50%;
+      background: #ededed;
+      border: 3px solid var(--accent);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(232, 93, 4, 0.35) 0%, rgba(15, 133, 114, 0.35) 100%);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #ededed;
+      border: 3px solid var(--accent);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+      cursor: pointer;
+    }
+
+    .grid-shell {
+      display: grid;
+      gap: 18px;
+    }
+
+    .count-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .count-label {
+      color: transparent;
+      user-select: none;
+    }
+
+    .step-counts {
+      display: grid;
+      grid-template-columns: repeat(16, minmax(32px, 1fr));
+      gap: 8px;
+    }
+
+    .step-counts span {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 700;
+      padding-bottom: 2px;
+    }
+
+    .step-counts span:nth-child(4n + 1) {
+      color: var(--accent-strong);
+    }
+
+    .step-counts span.strong-beat {
+      color: var(--accent-strong);
+      font-size: 0.84rem;
+    }
+
+    .step-counts span.out-of-bar {
+      opacity: 0.28;
+    }
+
+    .track {
+      display: grid;
+      grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .track-meta {
+      padding: 16px 18px;
+      border-radius: 22px;
+      color: #fffaf1;
+      min-height: 100%;
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .track-meta[data-track="surdo"] {
+      background: linear-gradient(135deg, var(--surdo) 0%, #5f2307 100%);
+    }
+
+    .track-meta[data-track="tamborim"] {
+      background: linear-gradient(135deg, var(--tamborim) 0%, #075649 100%);
+    }
+
+    .track-meta[data-track="caixa"] {
+      background: linear-gradient(135deg, var(--caixa) 0%, #1d3d69 100%);
+    }
+
+    .track-meta[data-track="agogo"] {
+      background: linear-gradient(135deg, var(--agogo) 0%, #53306f 100%);
+    }
+
+    .track-meta h2,
+    .track-meta p {
+      margin: 0;
+    }
+
+    .track-meta h2 {
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .track-meta p {
+      font-size: 0.92rem;
+      color: rgba(255, 250, 241, 0.84);
+    }
+
+    .track-controls {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .track-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .track-control-row span {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 250, 241, 0.82);
+      font-weight: 700;
+    }
+
+    .track-loop-button {
+      appearance: none;
+      border: 1px solid rgba(255, 250, 241, 0.35);
+      background: rgba(255, 250, 241, 0.12);
+      color: #fffaf1;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .track-loop-button.is-active {
+      background: rgba(255, 250, 241, 0.94);
+      color: var(--text);
+    }
+
+    .track-volume {
+      width: 100%;
+    }
+
+    .track-volume::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 250, 241, 0.3);
+    }
+
+    .track-volume::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      margin-top: -5px;
+      border-radius: 50%;
+      background: #fffaf1;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: none;
+    }
+
+    .track-volume::-moz-range-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 250, 241, 0.3);
+    }
+
+    .track-volume::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fffaf1;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: none;
+    }
+
+    .mute-button {
+      appearance: none;
+      border: 1px solid rgba(255, 250, 241, 0.35);
+      background: rgba(255, 250, 241, 0.14);
+      color: #fffaf1;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .mute-button.is-muted {
+      background: rgba(0, 0, 0, 0.45);
+      border-color: rgba(255, 250, 241, 0.2);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(16, minmax(32px, 1fr));
+      gap: 8px;
+    }
+
+    .step {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      aspect-ratio: 1 / 1;
+      background: var(--step-off);
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .step:nth-child(4n + 1) {
+      box-shadow: inset 0 0 0 2px rgba(232, 93, 4, 0.35), inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .step:hover,
+    .step:focus-visible {
+      transform: translateY(-1px);
+      outline: none;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2), 0 10px 18px rgba(0, 0, 0, 0.45);
+    }
+
+    .step.active[data-track="surdo"] {
+      background: linear-gradient(180deg, #cc8451 0%, #7c3208 100%);
+      color: #fffaf0;
+    }
+
+    .step.active[data-track="tamborim"] {
+      background: linear-gradient(180deg, #31b4a0 0%, #0d6c5d 100%);
+      color: #f3fffb;
+    }
+
+    .step.active[data-track="caixa"] {
+      background: linear-gradient(180deg, #79a7eb 0%, #2f5c9a 100%);
+      color: #f5f9ff;
+    }
+
+    .step.active[data-track="agogo"] {
+      background: linear-gradient(180deg, #c9a5ef 0%, #7a4ea3 100%);
+      color: #faf6ff;
+    }
+
+    .step.accented[data-track="surdo"] {
+      background: linear-gradient(180deg, #ffd18f 0%, #cc4b1f 100%);
+      color: #fffaf0;
+      box-shadow: inset 0 0 0 2px rgba(255, 250, 240, 0.24), 0 10px 18px rgba(153, 45, 18, 0.16);
+    }
+
+    .step.accented[data-track="tamborim"] {
+      background: linear-gradient(180deg, #8af2e1 0%, #0f8572 100%);
+      color: #08332d;
+      box-shadow: inset 0 0 0 2px rgba(255, 250, 240, 0.24), 0 10px 18px rgba(7, 86, 73, 0.16);
+    }
+
+    .step.accented[data-track="caixa"] {
+      background: linear-gradient(180deg, #dceaff 0%, #4b7ac6 100%);
+      color: #16304f;
+      box-shadow: inset 0 0 0 2px rgba(255, 250, 240, 0.24), 0 10px 18px rgba(29, 61, 105, 0.16);
+    }
+
+    .step.accented[data-track="agogo"] {
+      background: linear-gradient(180deg, #f1dcff 0%, #9564c5 100%);
+      color: #311548;
+      box-shadow: inset 0 0 0 2px rgba(255, 250, 240, 0.24), 0 10px 18px rgba(83, 48, 111, 0.16);
+    }
+
+    .step.playing {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 0 0 4px rgba(255, 211, 107, 0.34), 0 14px 24px rgba(232, 93, 4, 0.25);
+    }
+
+    .step.strong-beat {
+      box-shadow: inset 0 0 0 2px rgba(232, 93, 4, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .step.out-of-bar {
+      opacity: 0.34;
+      filter: grayscale(0.25);
+    }
+    
+    .step:disabled {
+      cursor: not-allowed;
+      opacity: 0.66;
+      transform: none;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .pdl-credit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding-top: 14px;
+      border-top: 1px solid var(--panel-border);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .pdl-credit a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .pdl-credit a:hover {
+      color: var(--accent);
+    }
+
+    .guide-panel {
+      display: grid;
+      gap: 14px;
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .guide-panel h2,
+    .guide-panel p {
+      margin: 0;
+    }
+
+    .guide-panel p {
+      color: var(--muted);
+    }
+
+    .pulse-guide {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .pulse-guide-step {
+      border-radius: 18px;
+      padding: 14px 12px;
+      background: #141414;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: 6px;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+    }
+
+    .pulse-guide-step strong {
+      font-size: 1rem;
+    }
+
+    .pulse-guide-step span {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .pulse-guide-step.active {
+      transform: translateY(-2px);
+      border-color: rgba(232, 93, 4, 0.45);
+      box-shadow: 0 14px 26px rgba(232, 93, 4, 0.2);
+      background: linear-gradient(180deg, rgba(232, 93, 4, 0.18) 0%, rgba(232, 93, 4, 0.08) 100%);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .swatch.surdo {
+      background: linear-gradient(180deg, #cc8451 0%, #7c3208 100%);
+    }
+
+    .swatch.tamborim {
+      background: linear-gradient(180deg, #31b4a0 0%, #0d6c5d 100%);
+    }
+
+    .swatch.playing {
+      background: var(--step-playing);
+    }
+
+    .swatch.accent {
+      background: linear-gradient(180deg, #ffd18f 0%, #cc4b1f 100%);
+    }
+
+    @media (max-width: 860px) {
+      .hero,
+      .controls,
+      .preset-panel,
+      .utility-panel,
+      .count-row,
+      .track {
+        grid-template-columns: 1fr;
+      }
+
+      .pulse-card {
+        justify-self: stretch;
+      }
+
+      .count-label {
+        display: none;
+      }
+
+      .step-counts,
+      .steps {
+        gap: 6px;
+      }
+
+      .preset-controls {
+        justify-content: stretch;
+      }
+
+      .preset-select,
+      .ghost-button,
+      .exchange-textarea {
+        width: 100%;
+      }
+
+      .pulse-guide {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      body {
+        padding: 12px;
+      }
+
+      .shell {
+        padding: 18px;
+      }
+
+      .step {
+        border-radius: 12px;
+        font-size: 0.76rem;
+      }
+
+      .step-counts span {
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top-band"></div>
+    <section class="shell">
+      <header class="hero">
+        <div class="title-wrap">
+          <div class="brand-row">
+            <svg class="brand-cubes" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="4" y="4" width="26" height="26" rx="5" fill="#e85d04" opacity="1"/>
+              <rect x="34" y="4" width="26" height="26" rx="5" fill="#e85d04" opacity="0.7"/>
+              <rect x="4" y="34" width="26" height="26" rx="5" fill="#e85d04" opacity="0.5"/>
+              <rect x="34" y="34" width="26" height="26" rx="5" fill="#e85d04" opacity="0.3"/>
+            </svg>
+            <p class="eyebrow">Secuenciador rítmico de estudio</p>
+          </div>
+          <h1>Batería Escuela de Aprendices</h1>
+          <p class="subtitle">
+            Programá una vuelta de 16 semicorcheas para practicar la marcación del surdo de primera
+            y el diseño rítmico del tamborim con referencia visual del pulso principal.
+          </p>
+        </div>
+
+        <aside class="pulse-card" aria-label="Indicador de pulso principal">
+          <p class="pulse-label">Pulso principal 4/4</p>
+          <div class="pulse-row">
+            <div class="led" id="pulseLed" aria-hidden="true"></div>
+            <div class="pulse-status" id="pulseText">Esperando reproducción</div>
+          </div>
+        </aside>
+      </header>
+
+      <section class="controls" aria-label="Controles globales">
+        <button class="transport" id="transportButton" type="button">Play</button>
+
+        <div class="tempo">
+          <div class="tempo-group">
+            <div class="tempo-top">
+              <strong>Tempo</strong>
+              <span class="tempo-value"><span id="bpmValue">100</span> BPM</span>
+            </div>
+            <input id="bpmSlider" type="range" min="80" max="150" value="100" step="1" />
+          </div>
+
+          <div class="tempo-group">
+            <div class="tempo-top">
+              <strong>Swing</strong>
+              <span class="tempo-value"><span id="swingValue">0</span>%</span>
+            </div>
+            <input id="swingSlider" type="range" min="0" max="40" value="0" step="1" />
+          </div>
+
+          <div class="tempo-group">
+            <div class="tempo-top">
+              <strong>Compás</strong>
+              <span class="tempo-value" id="signatureValue">4/4</span>
+            </div>
+            <select id="signatureSelect" class="signature-select" aria-label="Seleccionar compás">
+              <option value="2/4">2/4</option>
+              <option value="3/4">3/4</option>
+              <option value="4/4" selected>4/4</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="preset-panel" aria-label="Presets pedagógicos">
+        <div class="preset-copy">
+          <strong>Patrones guiados</strong>
+          <p>Elegí una base de estudio, ahora agrupada por nivel, y después ajustala paso por paso.</p>
+        </div>
+
+        <div class="preset-controls">
+          <label for="presetSelect" class="count-label">Preset</label>
+          <select id="presetSelect" class="preset-select" aria-label="Seleccionar preset"></select>
+          <button id="applyPresetButton" class="ghost-button" type="button">Cargar preset</button>
+          <button id="clearPatternButton" class="ghost-button" type="button">Limpiar</button>
+        </div>
+      </section>
+      
+      <section class="utility-panel" aria-label="Herramientas de práctica e intercambio">
+        <div class="exchange-panel">
+          <strong>Exportar o importar patrón</strong>
+          <p>Exportá el estado completo del secuenciador a JSON o pegá un patrón previamente guardado para recuperarlo.</p>
+          <textarea id="patternExchange" class="exchange-textarea" spellcheck="false" placeholder="Acá aparece el JSON exportado o pegás uno para importar..."></textarea>
+          <div class="exchange-actions">
+            <button id="exportPatternButton" class="ghost-button" type="button">Exportar</button>
+            <button id="downloadPatternButton" class="ghost-button" type="button">Descargar JSON</button>
+            <button id="copyPatternButton" class="ghost-button" type="button">Copiar</button>
+            <button id="importPatternButton" class="ghost-button" type="button">Importar</button>
+            <button id="openPatternButton" class="ghost-button" type="button">Abrir JSON</button>
+          </div>
+          <div id="exchangeStatus" class="status-chip">Sin intercambio todavía</div>
+
+          <strong>Biblioteca local</strong>
+          <p>Guardá varios patrones con nombre dentro del navegador para cargarlos después.</p>
+          <input id="namedPatternInput" class="signature-select" type="text" placeholder="Nombre del patrón" aria-label="Nombre del patrón" />
+          <select id="namedPatternSelect" class="signature-select" aria-label="Patrones guardados">
+            <option value="">Sin patrones guardados</option>
+          </select>
+          <div class="exchange-actions">
+            <button id="saveNamedPatternButton" class="ghost-button" type="button">Guardar patrón</button>
+            <button id="loadNamedPatternButton" class="ghost-button" type="button">Cargar guardado</button>
+            <button id="deleteNamedPatternButton" class="ghost-button" type="button">Eliminar guardado</button>
+          </div>
+        </div>
+        
+        <div class="practice-panel">
+          <strong>Modo práctica</strong>
+          <p>Al activarlo, la grilla queda bloqueada durante una vuelta completa para escuchar primero y recién después editar.</p>
+          <div class="practice-actions">
+            <button id="practiceModeButton" class="ghost-button practice-toggle" type="button" aria-pressed="false">Modo práctica: apagado</button>
+            <button id="metronomeButton" class="ghost-button" type="button" aria-pressed="false">Metrónomo: apagado</button>
+          </div>
+          <div id="practiceStatus" class="status-chip">Edición libre</div>
+          <div id="practiceLapCounter" class="status-chip is-neutral">Vuelta 0 / 1</div>
+        </div>
+      </section>
+
+      <section class="utility-panel" aria-label="Transicion entre compases y objetivo didactico">
+        <div class="exchange-panel">
+          <strong>Transición A/B</strong>
+          <p>Alterná entre tu compás actual y un segundo compás de referencia para practicar entradas, cortes o cambios de rueda.</p>
+          <div class="exchange-actions">
+            <button id="transitionModeButton" class="ghost-button" type="button" aria-pressed="false">Transición A/B: apagada</button>
+            <select id="transitionPresetSelect" class="signature-select" aria-label="Preset secundario de transición"></select>
+          </div>
+          <div id="transitionStatus" class="status-chip is-neutral">Barra activa: A</div>
+        </div>
+
+        <div class="practice-panel">
+          <strong>Objetivo didáctico</strong>
+          <p id="didacticGoal">Elegí un preset para ver qué escuchar, contar y estudiar en esa rueda.</p>
+          <div id="didacticFocus" class="status-chip is-neutral">Foco: referencia general</div>
+        </div>
+      </section>
+
+      <section class="utility-panel" aria-label="Práctica de taps y puntaje por compás">
+        <div class="tap-panel">
+          <strong>Respuesta del alumno</strong>
+          <p>Grabá tus taps mientras suena la rueda. Podés tocar con la barra espaciadora o con el botón TAP y después reproducir tu respuesta encima del patrón.</p>
+          <div class="exchange-actions">
+            <button id="tapRecordButton" class="ghost-button" type="button" aria-pressed="false">Grabar taps: apagado</button>
+            <button id="tapPlaybackButton" class="ghost-button" type="button" aria-pressed="false">Reproducir taps: apagado</button>
+            <button id="tapButton" class="ghost-button" type="button">TAP</button>
+            <button id="clearTapsButton" class="ghost-button" type="button">Limpiar taps</button>
+          </div>
+          <select id="tapReferenceTrack" class="signature-select" aria-label="Instrumento de referencia para puntaje">
+            <option value="surdo">Comparar contra Surdo</option>
+            <option value="tamborim">Comparar contra Tamborim</option>
+            <option value="caixa">Comparar contra Caixa</option>
+            <option value="agogo">Comparar contra Agogô</option>
+          </select>
+          <div id="tapStatus" class="status-chip is-neutral">Esperando taps</div>
+          <div class="tap-grid" id="tapGrid" aria-hidden="true"></div>
+        </div>
+
+        <div class="practice-panel">
+          <strong>Puntaje del compás</strong>
+          <p>Al cerrar cada vuelta se calcula cobertura del patrón y cercanía al grid de semicorcheas del instrumento de referencia.</p>
+          <div id="scoreStatus" class="status-chip is-neutral">Puntaje: sin vueltas medidas</div>
+          <div id="timingStatus" class="status-chip is-neutral">Timing: sin datos</div>
+          <div id="accuracyStatus" class="status-chip is-neutral">Referencia: Surdo</div>
+        </div>
+      </section>
+
+      <section class="grid-shell" aria-label="Secuenciador de 16 pasos">
+        <div class="count-row" aria-hidden="true">
+          <div class="count-label">Pasos</div>
+          <div class="step-counts" id="stepCounts"></div>
+        </div>
+        <div class="count-row">
+          <div class="count-label">Compás</div>
+          <div id="barRangeStatus" class="status-chip is-neutral">Compás 4/4: activos 1-16, atenuados fuera de compás</div>
+        </div>
+
+        <div class="track">
+          <div class="track-meta" data-track="surdo">
+            <h2>Surdo de Primera</h2>
+            <p>Marcación grave y estable</p>
+            <div class="track-controls">
+              <div class="track-control-row">
+                <span>Volumen</span>
+                <strong id="surdoVolumeValue">85%</strong>
+              </div>
+              <button id="surdoLoop" class="track-loop-button" type="button" aria-pressed="false">Estudiar solo</button>
+              <input id="surdoVolume" class="track-volume" type="range" min="0" max="100" value="85" step="1" aria-label="Volumen del surdo" />
+              <button id="surdoMute" class="mute-button" type="button" aria-pressed="false">Mute</button>
+            </div>
+          </div>
+          <div class="steps" id="surdoSteps" aria-label="Pasos del surdo"></div>
+        </div>
+
+        <div class="track">
+          <div class="track-meta" data-track="tamborim">
+            <h2>Tamborim</h2>
+            <p>Diseño agudo y cortado</p>
+            <div class="track-controls">
+              <div class="track-control-row">
+                <span>Volumen</span>
+                <strong id="tamborimVolumeValue">75%</strong>
+              </div>
+              <button id="tamborimLoop" class="track-loop-button" type="button" aria-pressed="false">Estudiar solo</button>
+              <input id="tamborimVolume" class="track-volume" type="range" min="0" max="100" value="75" step="1" aria-label="Volumen del tamborim" />
+              <button id="tamborimMute" class="mute-button" type="button" aria-pressed="false">Mute</button>
+            </div>
+          </div>
+          <div class="steps" id="tamborimSteps" aria-label="Pasos del tamborim"></div>
+        </div>
+
+        <div class="track">
+          <div class="track-meta" data-track="caixa">
+            <h2>Caixa</h2>
+            <p>Textura de caja para sostener el pulso</p>
+            <div class="track-controls">
+              <div class="track-control-row">
+                <span>Volumen</span>
+                <strong id="caixaVolumeValue">70%</strong>
+              </div>
+              <button id="caixaLoop" class="track-loop-button" type="button" aria-pressed="false">Estudiar solo</button>
+              <input id="caixaVolume" class="track-volume" type="range" min="0" max="100" value="70" step="1" aria-label="Volumen de la caixa" />
+              <button id="caixaMute" class="mute-button" type="button" aria-pressed="false">Mute</button>
+            </div>
+          </div>
+          <div class="steps" id="caixaSteps" aria-label="Pasos de la caixa"></div>
+        </div>
+
+        <div class="track">
+          <div class="track-meta" data-track="agogo">
+            <h2>Agogô</h2>
+            <p>Campanas agudas para llamada melódica</p>
+            <div class="track-controls">
+              <div class="track-control-row">
+                <span>Volumen</span>
+                <strong id="agogoVolumeValue">68%</strong>
+              </div>
+              <button id="agogoLoop" class="track-loop-button" type="button" aria-pressed="false">Estudiar solo</button>
+              <input id="agogoVolume" class="track-volume" type="range" min="0" max="100" value="68" step="1" aria-label="Volumen del agogô" />
+              <button id="agogoMute" class="mute-button" type="button" aria-pressed="false">Mute</button>
+            </div>
+          </div>
+          <div class="steps" id="agogoSteps" aria-label="Pasos del agogô"></div>
+        </div>
+      </section>
+
+      <section class="guide-panel" aria-label="Guía de compás 4/4">
+        <h2>Guía del compás</h2>
+        <p>Cada bloque representa un pulso. El resaltado avanza según el compás elegido para ayudar a contar mientras mirás las semicorcheas.</p>
+        <p>Click en cada celda: apagado, golpe normal, acento. El swing atrasa levemente las semicorcheas pares para sentir más balanceo.</p>
+        <div class="pulse-guide" id="pulseGuide"></div>
+      </section>
+
+      <footer class="legend" aria-label="Leyenda visual">
+        <span><i class="swatch surdo"></i> Paso activo de surdo</span>
+        <span><i class="swatch tamborim"></i> Paso activo de tamborim</span>
+        <span><i class="swatch playing"></i> Caixa y agogô usan el mismo ciclo visual</span>
+        <span><i class="swatch accent"></i> Paso con acento = segundo click</span>
+        <span><i class="swatch playing"></i> Paso en reproducción</span>
+      </footer>
+
+      <footer class="pdl-credit">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="14" height="14" aria-hidden="true">
+          <rect x="4" y="4" width="26" height="26" rx="5" fill="currentColor" opacity="1"/>
+          <rect x="34" y="4" width="26" height="26" rx="5" fill="currentColor" opacity="0.7"/>
+          <rect x="4" y="34" width="26" height="26" rx="5" fill="currentColor" opacity="0.5"/>
+          <rect x="34" y="34" width="26" height="26" rx="5" fill="currentColor" opacity="0.3"/>
+        </svg>
+        <a href="https://desarrolloweb-pdl.vercel.app/" target="_blank" rel="noopener">DesarrolloWeb-pdl</a>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const totalSteps = 16;
+    const storageKey = 'batucada-step-sequencer-state';
+    const libraryStorageKey = 'batucada-step-sequencer-library';
+    const stepCountsContainer = document.getElementById('stepCounts');
+    const transportButton = document.getElementById('transportButton');
+    const bpmSlider = document.getElementById('bpmSlider');
+    const bpmValue = document.getElementById('bpmValue');
+    const swingSlider = document.getElementById('swingSlider');
+    const swingValue = document.getElementById('swingValue');
+    const signatureSelect = document.getElementById('signatureSelect');
+    const signatureValue = document.getElementById('signatureValue');
+    const pulseLed = document.getElementById('pulseLed');
+    const pulseText = document.getElementById('pulseText');
+    const presetSelect = document.getElementById('presetSelect');
+    const applyPresetButton = document.getElementById('applyPresetButton');
+    const clearPatternButton = document.getElementById('clearPatternButton');
+    const patternExchange = document.getElementById('patternExchange');
+    const exportPatternButton = document.getElementById('exportPatternButton');
+    const downloadPatternButton = document.getElementById('downloadPatternButton');
+    const copyPatternButton = document.getElementById('copyPatternButton');
+    const importPatternButton = document.getElementById('importPatternButton');
+    const openPatternButton = document.getElementById('openPatternButton');
+    const namedPatternInput = document.getElementById('namedPatternInput');
+    const namedPatternSelect = document.getElementById('namedPatternSelect');
+    const saveNamedPatternButton = document.getElementById('saveNamedPatternButton');
+    const loadNamedPatternButton = document.getElementById('loadNamedPatternButton');
+    const deleteNamedPatternButton = document.getElementById('deleteNamedPatternButton');
+    const exchangeStatus = document.getElementById('exchangeStatus');
+    const barRangeStatus = document.getElementById('barRangeStatus');
+    const practiceModeButton = document.getElementById('practiceModeButton');
+    const metronomeButton = document.getElementById('metronomeButton');
+    const practiceStatus = document.getElementById('practiceStatus');
+    const practiceLapCounter = document.getElementById('practiceLapCounter');
+    const transitionModeButton = document.getElementById('transitionModeButton');
+    const transitionPresetSelect = document.getElementById('transitionPresetSelect');
+    const transitionStatus = document.getElementById('transitionStatus');
+    const didacticGoal = document.getElementById('didacticGoal');
+    const didacticFocus = document.getElementById('didacticFocus');
+    const pulseGuide = document.getElementById('pulseGuide');
+    const tapRecordButton = document.getElementById('tapRecordButton');
+    const tapPlaybackButton = document.getElementById('tapPlaybackButton');
+    const tapButton = document.getElementById('tapButton');
+    const clearTapsButton = document.getElementById('clearTapsButton');
+    const tapReferenceTrack = document.getElementById('tapReferenceTrack');
+    const tapStatus = document.getElementById('tapStatus');
+    const tapGrid = document.getElementById('tapGrid');
+    const scoreStatus = document.getElementById('scoreStatus');
+    const timingStatus = document.getElementById('timingStatus');
+    const accuracyStatus = document.getElementById('accuracyStatus');
+
+    const trackOrder = ['surdo', 'tamborim', 'caixa', 'agogo'];
+
+    const patterns = {
+      surdo: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0],
+      tamborim: [0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 0, 0, 1, 0, 2],
+      caixa: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0],
+      agogo: [2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0]
+    };
+
+    const presets = {
+      marcacao: {
+        section: 'Base',
+        level: 'Basico',
+        signature: '4/4',
+        accentSteps: [0, 4, 8, 12],
+        label: 'Marcação de estudo',
+        goal: 'Escuchá la estabilidad del surdo en los cuatro tiempos y contá en voz alta la cuadrícula completa antes de adornar.',
+        focus: 'Pulso estable y entrada limpia',
+        surdo: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0],
+        tamborim: [0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 0, 0, 1, 0, 2],
+        caixa: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0],
+        agogo: [2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0]
+      },
+      carreteiro: {
+        section: 'Base',
+        level: 'Intermedio',
+        signature: '4/4',
+        accentSteps: [0, 6, 8, 14],
+        label: 'Carreteiro simple',
+        goal: 'Sentí cómo el desplazamiento del tamborim y el agogô genera empuje sin perder el centro del compás.',
+        focus: 'Contratiempo y balanceo',
+        surdo: [1, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 2, 0],
+        tamborim: [0, 1, 0, 1, 0, 0, 2, 0, 0, 1, 0, 1, 0, 0, 2, 0],
+        caixa: [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 2, 0, 1, 0],
+        agogo: [0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0]
+      },
+      virada: {
+        section: 'Salida',
+        level: 'Avanzado',
+        signature: '4/4',
+        accentSteps: [0, 4, 11, 12],
+        label: 'Virada de chamada',
+        goal: 'Escuchá la llamada como una preparación para el cambio de rueda, cuidando la caída de los acentos finales.',
+        focus: 'Llamada y resolución',
+        surdo: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 2, 0, 0, 0],
+        tamborim: [0, 0, 1, 2, 0, 1, 0, 0, 0, 0, 1, 2, 0, 1, 0, 2],
+        caixa: [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0],
+        agogo: [2, 0, 0, 1, 0, 0, 2, 0, 2, 0, 0, 1, 0, 0, 2, 0]
+      },
+      corteBinario: {
+        section: 'Corte',
+        level: 'Basico',
+        signature: '2/4',
+        accentSteps: [0, 4],
+        label: 'Corte binario 2/4',
+        goal: 'Contá fuerte 1 y 2, sintiendo el recorte del compás corto y la precisión de los cortes binarios.',
+        focus: 'Compás corto y precisión',
+        surdo: [2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        tamborim: [0, 1, 0, 1, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+        caixa: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        agogo: [2, 0, 0, 1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      valsaSamba: {
+        section: 'Entrada',
+        level: 'Intermedio',
+        signature: '3/4',
+        accentSteps: [0, 4, 8],
+        label: 'Balanceo 3/4',
+        goal: 'Escuchá el vaivén de tres pulsos sin acelerarte; la meta es mantener la rueda redonda y pareja.',
+        focus: 'Balance ternario',
+        surdo: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        tamborim: [0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0],
+        caixa: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0],
+        agogo: [2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]
+      },
+      entradaChamada: {
+        section: 'Entrada',
+        level: 'Basico',
+        signature: '4/4',
+        accentSteps: [0, 4, 8, 12],
+        label: 'Entrada de llamada',
+        goal: 'Practicá una entrada clara: pulso firme al comienzo y respuesta corta del resto de la rueda.',
+        focus: 'Ataque inicial y orden de ingreso',
+        surdo: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        tamborim: [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+        caixa: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        agogo: [2, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0]
+      },
+      baseReta: {
+        section: 'Base',
+        level: 'Basico',
+        signature: '4/4',
+        accentSteps: [0, 4, 8, 12],
+        label: 'Base recta de rueda',
+        goal: 'Mantené una base pareja y sin apuro, sosteniendo la rueda con regularidad.',
+        focus: 'Regularidad y sostén',
+        surdo: [2, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0],
+        tamborim: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+        caixa: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+        agogo: [2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0]
+      },
+      corteSeco: {
+        section: 'Corte',
+        level: 'Intermedio',
+        signature: '2/4',
+        accentSteps: [0, 4],
+        label: 'Corte seco',
+        goal: 'Cortá con decisión y silencio claro entre ataques para que el gesto del corte se entienda.',
+        focus: 'Precisión de corte y huecos',
+        surdo: [2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        tamborim: [0, 1, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        caixa: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        agogo: [2, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      salidaAbierta: {
+        section: 'Salida',
+        level: 'Intermedio',
+        signature: '4/4',
+        accentSteps: [0, 4, 8, 12],
+        label: 'Salida abierta',
+        goal: 'Pensá la salida como expansión: la energía crece y remata ordenada en el último pulso.',
+        focus: 'Resolución y cierre largo',
+        surdo: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 2, 0, 0, 0],
+        tamborim: [0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 1, 2, 0, 1, 0, 2],
+        caixa: [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 2, 0, 1, 0],
+        agogo: [2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 1, 2, 0, 0, 0]
+      }
+    };
+
+    const tracks = {
+      surdo: {
+        container: document.getElementById('surdoSteps'),
+        buttons: [],
+        volumeSlider: document.getElementById('surdoVolume'),
+        volumeValue: document.getElementById('surdoVolumeValue'),
+        loopButton: document.getElementById('surdoLoop'),
+        muteButton: document.getElementById('surdoMute'),
+        isMuted: false,
+        synth: new Tone.MembraneSynth({
+          pitchDecay: 0.035,
+          octaves: 3,
+          oscillator: { type: 'sine' },
+          envelope: {
+            attack: 0.001,
+            decay: 0.45,
+            sustain: 0.08,
+            release: 0.6
+          }
+        }).toDestination(),
+        trigger(time, velocity) {
+          this.synth.triggerAttackRelease('C2', '8n', time, velocity);
+        }
+      },
+      tamborim: {
+        container: document.getElementById('tamborimSteps'),
+        buttons: [],
+        volumeSlider: document.getElementById('tamborimVolume'),
+        volumeValue: document.getElementById('tamborimVolumeValue'),
+        loopButton: document.getElementById('tamborimLoop'),
+        muteButton: document.getElementById('tamborimMute'),
+        isMuted: false,
+        synth: new Tone.MetalSynth({
+          frequency: 380,
+          envelope: {
+            attack: 0.001,
+            decay: 0.08,
+            release: 0.01
+          },
+          harmonicity: 7.2,
+          modulationIndex: 28,
+          resonance: 2400,
+          octaves: 1.5,
+          volume: -10
+        }).toDestination(),
+        trigger(time, velocity) {
+          this.synth.triggerAttackRelease('32n', time, velocity);
+        }
+      },
+      caixa: {
+        container: document.getElementById('caixaSteps'),
+        buttons: [],
+        volumeSlider: document.getElementById('caixaVolume'),
+        volumeValue: document.getElementById('caixaVolumeValue'),
+        loopButton: document.getElementById('caixaLoop'),
+        muteButton: document.getElementById('caixaMute'),
+        isMuted: false,
+        synth: new Tone.NoiseSynth({
+          noise: { type: 'white' },
+          envelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.05 }
+        }).toDestination(),
+        trigger(time, velocity) {
+          this.synth.volume.value = Tone.gainToDb(Math.max(0.001, velocity));
+          this.synth.triggerAttackRelease('16n', time);
+        }
+      },
+      agogo: {
+        container: document.getElementById('agogoSteps'),
+        buttons: [],
+        volumeSlider: document.getElementById('agogoVolume'),
+        volumeValue: document.getElementById('agogoVolumeValue'),
+        loopButton: document.getElementById('agogoLoop'),
+        muteButton: document.getElementById('agogoMute'),
+        isMuted: false,
+        synth: new Tone.FMSynth({
+          harmonicity: 2.5,
+          modulationIndex: 12,
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.001, decay: 0.18, sustain: 0, release: 0.08 },
+          modulation: { type: 'square' },
+          modulationEnvelope: { attack: 0.001, decay: 0.12, sustain: 0, release: 0.04 }
+        }).toDestination(),
+        trigger(time, velocity) {
+          this.synth.triggerAttackRelease(velocity > 0.8 ? 'A5' : 'E5', '16n', time, velocity);
+        }
+      }
+    };
+
+    let currentStep = 0;
+    let repeatId = null;
+    let isPlaying = false;
+    let isHydratingState = true;
+    let isPracticeMode = false;
+    let isEditingLocked = false;
+    let practiceLapProgress = 0;
+    let currentSignature = '4/4';
+    let currentAccentSteps = [0, 4, 8, 12];
+    let namedPatternLibrary = {};
+    let loopTrack = null;
+    let isMetronomeEnabled = false;
+    let isTransitionMode = false;
+    let transitionPresetKey = 'corteBinario';
+    let activeBarLabel = 'A';
+    let isTapRecordEnabled = false;
+    let isTapPlaybackEnabled = false;
+    let tapReferenceTrackName = 'surdo';
+    let currentBarTapPattern = new Array(totalSteps).fill(0);
+    let currentBarTapOffsets = new Array(totalSteps).fill(null);
+    let lastRecordedTapPattern = new Array(totalSteps).fill(0);
+    let lastRecordedTapOffsets = new Array(totalSteps).fill(null);
+
+    const metronomeSynth = new Tone.Synth({
+      oscillator: { type: 'square' },
+      envelope: { attack: 0.001, decay: 0.06, sustain: 0, release: 0.02 },
+      volume: -14
+    }).toDestination();
+
+    const tapSynth = new Tone.Synth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.02 },
+      volume: -12
+    }).toDestination();
+
+    function normalizePatternStep(value) {
+      if (value === true) {
+        return 1;
+      }
+
+      if (value === 2) {
+        return 2;
+      }
+
+      return value ? 1 : 0;
+    }
+
+    function getStepStateLabel(value) {
+      if (value === 2) {
+        return 'acento';
+      }
+
+      if (value === 1) {
+        return 'golpe';
+      }
+
+      return 'silencio';
+    }
+
+    function updateStepButton(button, value) {
+      const normalizedValue = normalizePatternStep(value);
+      button.classList.toggle('active', normalizedValue > 0);
+      button.classList.toggle('accented', normalizedValue === 2);
+      button.setAttribute('aria-pressed', String(normalizedValue > 0));
+      button.setAttribute('data-state', String(normalizedValue));
+    }
+    
+    function captureSequencerState() {
+      return {
+        bpm: Number(bpmSlider.value),
+        swing: Number(swingSlider.value),
+        signature: currentSignature,
+        accentSteps: [...currentAccentSteps],
+        loopTrack,
+        isMetronomeEnabled,
+        isTransitionMode,
+        transitionPresetKey,
+        isTapRecordEnabled,
+        isTapPlaybackEnabled,
+        tapReferenceTrackName,
+        lastRecordedTapPattern: [...lastRecordedTapPattern],
+        lastRecordedTapOffsets: [...lastRecordedTapOffsets],
+        presetKey: presetSelect.value,
+        practiceMode: isPracticeMode,
+        patterns: Object.fromEntries(trackOrder.map((trackName) => [trackName, [...patterns[trackName]]])),
+        trackSettings: Object.fromEntries(
+          trackOrder.map((trackName) => [trackName, {
+            volume: Number(tracks[trackName].volumeSlider.value),
+            muted: tracks[trackName].isMuted
+          }])
+        )
+      };
+    }
+
+    function updatePracticeLapCounter(current, total) {
+      practiceLapCounter.textContent = `Vuelta ${current} / ${total}`;
+      practiceLapCounter.classList.toggle('is-ready', current >= total && total > 0);
+      practiceLapCounter.classList.toggle('is-neutral', current < total);
+    }
+
+    function updateDidacticPanel(presetKey) {
+      const preset = presets[presetKey];
+
+      if (!preset) {
+        didacticGoal.textContent = 'Elegí un preset para ver qué escuchar, contar y estudiar en esa rueda.';
+        didacticFocus.textContent = 'Foco: referencia general';
+        return;
+      }
+
+      didacticGoal.textContent = preset.goal || 'Escuchá el balance general del patrón y marcá el pulso principal antes de tocar encima.';
+      didacticFocus.textContent = `Foco: ${preset.focus || 'referencia general'}${preset.section ? ` · Sección: ${preset.section}` : ''}`;
+    }
+
+    function resetCurrentTapBuffer() {
+      currentBarTapPattern = new Array(totalSteps).fill(0);
+      currentBarTapOffsets = new Array(totalSteps).fill(null);
+    }
+
+    function renderTapGrid() {
+      const activeStepCount = getActiveStepCount();
+      tapGrid.replaceChildren();
+
+      for (let index = 0; index < totalSteps; index += 1) {
+        const marker = document.createElement('span');
+        marker.classList.toggle('is-active', Boolean(lastRecordedTapPattern[index]));
+        marker.classList.toggle('out-of-bar', index >= activeStepCount);
+        tapGrid.appendChild(marker);
+      }
+    }
+
+    function setTapStatus(message, ready) {
+      tapStatus.textContent = message;
+      tapStatus.classList.toggle('is-ready', Boolean(ready));
+      tapStatus.classList.toggle('is-neutral', !ready);
+    }
+
+    function setTapRecordEnabled(enabled) {
+      isTapRecordEnabled = enabled;
+      tapRecordButton.setAttribute('aria-pressed', String(enabled));
+      tapRecordButton.textContent = enabled ? 'Grabar taps: encendido' : 'Grabar taps: apagado';
+      tapRecordButton.classList.toggle('is-active', enabled);
+      setTapStatus(enabled ? 'Grabación armada: tocá TAP o barra espaciadora mientras suena' : 'Grabación desarmada', enabled);
+      saveState();
+    }
+
+    function setTapPlaybackEnabled(enabled) {
+      isTapPlaybackEnabled = enabled;
+      tapPlaybackButton.setAttribute('aria-pressed', String(enabled));
+      tapPlaybackButton.textContent = enabled ? 'Reproducir taps: encendido' : 'Reproducir taps: apagado';
+      tapPlaybackButton.classList.toggle('is-active', enabled);
+      saveState();
+    }
+
+    function getPlaybackSourcePatterns() {
+      const transitionPreset = presets[transitionPresetKey];
+      return isTransitionMode && activeBarLabel === 'B' && transitionPreset ? transitionPreset : patterns;
+    }
+
+    function recordTap() {
+      if (!isTapRecordEnabled) {
+        setTapStatus('Activá la grabación de taps antes de tocar', false);
+        return;
+      }
+
+      if (!isPlaying) {
+        setTapStatus('Dale play para medir tus taps sobre el compás', false);
+        return;
+      }
+
+      const activeStepCount = getActiveStepCount();
+      const ticksPerStep = Tone.Transport.PPQ / 4;
+      const rawStep = ((Tone.Transport.ticks / ticksPerStep) % activeStepCount + activeStepCount) % activeStepCount;
+      const roundedStep = Math.round(rawStep) % activeStepCount;
+      const deltaSteps = rawStep - roundedStep;
+      const existingOffset = currentBarTapOffsets[roundedStep];
+
+      currentBarTapPattern[roundedStep] = 1;
+      if (existingOffset === null || Math.abs(deltaSteps) < Math.abs(existingOffset)) {
+        currentBarTapOffsets[roundedStep] = deltaSteps;
+      }
+
+      setTapStatus(`Tap registrado en el paso ${roundedStep + 1}`, true);
+      tapSynth.triggerAttackRelease('C6', '32n', Tone.now(), 0.7);
+    }
+
+    function clearRecordedTaps() {
+      resetCurrentTapBuffer();
+      lastRecordedTapPattern = new Array(totalSteps).fill(0);
+      lastRecordedTapOffsets = new Array(totalSteps).fill(null);
+      renderTapGrid();
+      scoreStatus.textContent = 'Puntaje: sin vueltas medidas';
+      timingStatus.textContent = 'Timing: sin datos';
+      scoreStatus.classList.remove('is-ready');
+      timingStatus.classList.remove('is-ready');
+      setTapStatus('Taps limpiados', false);
+      saveState();
+    }
+
+    function scoreCurrentBar() {
+      const sourcePatterns = getPlaybackSourcePatterns();
+      const referencePattern = sourcePatterns[tapReferenceTrackName] || patterns[tapReferenceTrackName];
+      const activeStepCount = getActiveStepCount();
+      const expectedSteps = [];
+      const recordedSteps = [];
+
+      for (let index = 0; index < activeStepCount; index += 1) {
+        if (normalizePatternStep(referencePattern[index]) > 0) {
+          expectedSteps.push(index);
+        }
+
+        if (lastRecordedTapPattern[index]) {
+          recordedSteps.push(index);
+        }
+      }
+
+      const matchedSteps = recordedSteps.filter((step) => expectedSteps.includes(step));
+      const coverage = expectedSteps.length ? matchedSteps.length / expectedSteps.length : 1;
+      const extras = recordedSteps.filter((step) => !expectedSteps.includes(step)).length;
+      const matchedOffsets = matchedSteps.map((step) => lastRecordedTapOffsets[step]).filter((value) => typeof value === 'number');
+      const timingPenalty = matchedOffsets.length
+        ? matchedOffsets.reduce((sum, value) => sum + Math.min(Math.abs(value), 0.5), 0) / matchedOffsets.length
+        : 0.5;
+      const score = Math.max(0, Math.round((coverage * 70) + ((1 - timingPenalty / 0.5) * 30) - (extras * 8)));
+      const averageOffset = matchedOffsets.length
+        ? matchedOffsets.reduce((sum, value) => sum + value, 0) / matchedOffsets.length
+        : 0;
+      const timingLabel = averageOffset < -0.08 ? 'adelantado' : averageOffset > 0.08 ? 'atrasado' : 'centrado';
+      const millisecondsOffset = Math.round(Math.abs(averageOffset) * Tone.Time('16n').toMilliseconds());
+
+      scoreStatus.textContent = `Puntaje: ${score}/100`;
+      timingStatus.textContent = matchedOffsets.length
+        ? `Timing: ${timingLabel} (${millisecondsOffset} ms promedio)`
+        : 'Timing: faltan coincidencias con la referencia';
+      accuracyStatus.textContent = `Referencia: ${tracks[tapReferenceTrackName].container.getAttribute('aria-label').replace('Pasos del ', '')}`;
+      scoreStatus.classList.toggle('is-ready', score >= 75);
+      timingStatus.classList.toggle('is-ready', timingLabel === 'centrado' && matchedOffsets.length > 0);
+    }
+
+    function setMetronomeEnabled(enabled) {
+      isMetronomeEnabled = enabled;
+      metronomeButton.setAttribute('aria-pressed', String(enabled));
+      metronomeButton.textContent = enabled ? 'Metrónomo: encendido' : 'Metrónomo: apagado';
+      metronomeButton.classList.toggle('is-active', enabled);
+      saveState();
+    }
+
+    function setTransitionMode(enabled) {
+      isTransitionMode = enabled;
+      activeBarLabel = 'A';
+      transitionModeButton.setAttribute('aria-pressed', String(enabled));
+      transitionModeButton.textContent = enabled ? 'Transición A/B: encendida' : 'Transición A/B: apagada';
+      transitionModeButton.classList.toggle('is-active', enabled);
+      transitionStatus.textContent = enabled ? 'Barra activa: A' : 'Barra activa: patrón actual';
+      renderPulseGuide();
+      refreshStepVisuals();
+      saveState();
+    }
+
+    function renderTransitionPresets() {
+      transitionPresetSelect.replaceChildren();
+
+      Object.entries(presets).forEach(([key, preset]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${preset.section || 'General'} · ${preset.label} (${preset.signature})`;
+        transitionPresetSelect.appendChild(option);
+      });
+
+      transitionPresetSelect.value = transitionPresetKey;
+    }
+
+    function loadPatternLibrary() {
+      const rawLibrary = window.localStorage.getItem(libraryStorageKey);
+
+      if (!rawLibrary) {
+        namedPatternLibrary = {};
+        return;
+      }
+
+      try {
+        namedPatternLibrary = JSON.parse(rawLibrary) || {};
+      } catch (error) {
+        namedPatternLibrary = {};
+        window.localStorage.removeItem(libraryStorageKey);
+      }
+    }
+
+    function savePatternLibrary() {
+      window.localStorage.setItem(libraryStorageKey, JSON.stringify(namedPatternLibrary));
+    }
+
+    function renderNamedPatternLibrary() {
+      namedPatternSelect.replaceChildren();
+      const names = Object.keys(namedPatternLibrary).sort((left, right) => left.localeCompare(right, 'es'));
+
+      if (!names.length) {
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = 'Sin patrones guardados';
+        namedPatternSelect.appendChild(emptyOption);
+        return;
+      }
+
+      names.forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        namedPatternSelect.appendChild(option);
+      });
+    }
+
+    function getBeatsPerBar() {
+      return Number(currentSignature.split('/')[0]);
+    }
+
+    function getPlaybackPreset() {
+      return isTransitionMode && activeBarLabel === 'B' ? presets[transitionPresetKey] || null : null;
+    }
+
+    function getPlaybackSignature() {
+      return getPlaybackPreset()?.signature || currentSignature;
+    }
+
+    function getPlaybackAccentSteps() {
+      return getPlaybackPreset()?.accentSteps || currentAccentSteps;
+    }
+
+    function getPlaybackBeatsPerBar() {
+      return Number(getPlaybackSignature().split('/')[0]);
+    }
+
+    function getActiveStepCount() {
+      return getPlaybackBeatsPerBar() * 4;
+    }
+
+    function getDefaultAccentSteps() {
+      return Array.from({ length: getBeatsPerBar() }, (_, index) => index * 4);
+    }
+
+    function renderPulseGuide() {
+      const labels = ['Entrada del compás', 'Sostené la rueda', 'Centro del ciclo', 'Cierre y vuelta'];
+      pulseGuide.replaceChildren();
+
+      for (let index = 0; index < getPlaybackBeatsPerBar(); index += 1) {
+        const item = document.createElement('div');
+        item.className = 'pulse-guide-step';
+        item.dataset.beat = index;
+        item.innerHTML = `<strong>${index + 1}</strong><span>${labels[index] || `Pulso ${index + 1}`}</span>`;
+        pulseGuide.appendChild(item);
+      }
+    }
+
+    function refreshStepVisuals() {
+      const accentSet = new Set(getPlaybackAccentSteps());
+      const activeStepCount = getActiveStepCount();
+      barRangeStatus.textContent = `Compás ${getPlaybackSignature()}: activos 1-${activeStepCount}, pasos ${activeStepCount + 1}-16 fuera de compás`;
+
+      Array.from(stepCountsContainer.children).forEach((marker, index) => {
+        marker.classList.toggle('strong-beat', accentSet.has(index));
+        marker.classList.toggle('out-of-bar', index >= activeStepCount);
+        marker.textContent = index >= activeStepCount ? 'x' : index + 1;
+      });
+
+      trackOrder.forEach((trackName) => {
+        tracks[trackName].buttons.forEach((button, index) => {
+          button.classList.toggle('strong-beat', accentSet.has(index));
+          button.classList.toggle('out-of-bar', index >= activeStepCount);
+          button.title = index >= activeStepCount ? 'Paso fuera del compás actual' : `Paso ${index + 1} activo`;
+        });
+      });
+    }
+
+    function setLoopTrack(trackName) {
+      loopTrack = trackName;
+      trackOrder.forEach((name) => {
+        const isActive = loopTrack === name;
+        tracks[name].loopButton.classList.toggle('is-active', isActive);
+        tracks[name].loopButton.setAttribute('aria-pressed', String(isActive));
+        tracks[name].loopButton.textContent = isActive ? 'Salir de estudio' : 'Estudiar solo';
+      });
+      saveState();
+    }
+
+    function updateSignature(value) {
+      currentSignature = value;
+      signatureSelect.value = value;
+      signatureValue.textContent = value;
+      currentAccentSteps = getDefaultAccentSteps();
+      Tone.Transport.timeSignature = [getBeatsPerBar(), 4];
+      renderPulseGuide();
+      refreshStepVisuals();
+      saveState();
+    }
+    
+    function setExchangeStatus(message, ready) {
+      exchangeStatus.textContent = message;
+      exchangeStatus.classList.toggle('is-ready', Boolean(ready));
+    }
+    
+    function setPracticeStatus(message, ready) {
+      practiceStatus.textContent = message;
+      practiceStatus.classList.toggle('is-ready', Boolean(ready));
+    }
+
+    function saveState() {
+      if (isHydratingState) {
+        return;
+      }
+
+      window.localStorage.setItem(storageKey, JSON.stringify(captureSequencerState()));
+    }
+
+    function loadState() {
+      const rawState = window.localStorage.getItem(storageKey);
+
+      if (!rawState) {
+        return null;
+      }
+
+      try {
+        return JSON.parse(rawState);
+      } catch (error) {
+        console.warn('No se pudo leer el estado guardado:', error);
+        window.localStorage.removeItem(storageKey);
+        return null;
+      }
+    }
+
+    function downloadJsonFile() {
+      const exported = JSON.stringify(captureSequencerState(), null, 2);
+      const blob = new Blob([exported], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'batucada-pattern.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      patternExchange.value = exported;
+      setExchangeStatus('Archivo JSON descargado', true);
+    }
+
+    function readImportedFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        patternExchange.value = typeof reader.result === 'string' ? reader.result : '';
+        importPattern();
+      };
+      reader.onerror = () => {
+        setExchangeStatus('No se pudo leer el archivo JSON', false);
+      };
+      reader.readAsText(file);
+    }
+
+    function ensureFileImportInput() {
+      let input = document.getElementById('patternFileInput');
+
+      if (input) {
+        return input;
+      }
+
+      input = document.createElement('input');
+      input.id = 'patternFileInput';
+      input.type = 'file';
+      input.accept = 'application/json,.json';
+      input.hidden = true;
+      input.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (file) {
+          readImportedFile(file);
+        }
+        event.target.value = '';
+      });
+      document.body.appendChild(input);
+      return input;
+    }
+
+    function triggerFileImport() {
+      ensureFileImportInput().click();
+    }
+
+    function createCountRow() {
+      stepCountsContainer.replaceChildren();
+      for (let index = 0; index < totalSteps; index += 1) {
+        const marker = document.createElement('span');
+        marker.textContent = index + 1;
+        stepCountsContainer.appendChild(marker);
+      }
+    }
+
+    function renderSteps(trackName) {
+      const track = tracks[trackName];
+      const fragment = document.createDocumentFragment();
+
+      for (let index = 0; index < totalSteps; index += 1) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'step';
+        button.dataset.track = trackName;
+        button.dataset.step = index;
+        button.setAttribute('aria-label', `${trackName} paso ${index + 1}, ${getStepStateLabel(patterns[trackName][index])}`);
+        button.textContent = index + 1;
+        updateStepButton(button, patterns[trackName][index]);
+
+        button.addEventListener('click', () => {
+          patterns[trackName][index] = (normalizePatternStep(patterns[trackName][index]) + 1) % 3;
+          updateStepButton(button, patterns[trackName][index]);
+          button.setAttribute('aria-label', `${trackName} paso ${index + 1}, ${getStepStateLabel(patterns[trackName][index])}`);
+          saveState();
+        });
+
+        track.buttons.push(button);
+        fragment.appendChild(button);
+      }
+
+      track.container.appendChild(fragment);
+    }
+
+    function syncButtons(trackName) {
+      tracks[trackName].buttons.forEach((button, index) => {
+        const stepValue = normalizePatternStep(patterns[trackName][index]);
+        updateStepButton(button, stepValue);
+        button.setAttribute('aria-label', `${trackName} paso ${index + 1}, ${getStepStateLabel(stepValue)}`);
+      });
+    }
+
+    function applyPreset(presetKey) {
+      const preset = presets[presetKey];
+
+      if (!preset) {
+        return;
+      }
+
+      trackOrder.forEach((trackName) => {
+        if (preset[trackName]?.length === totalSteps) {
+          patterns[trackName] = [...preset[trackName]];
+          syncButtons(trackName);
+        }
+      });
+
+      if (preset.signature) {
+        updateSignature(preset.signature);
+      }
+
+      currentAccentSteps = preset.accentSteps ? [...preset.accentSteps] : getDefaultAccentSteps();
+      refreshStepVisuals();
+      updateDidacticPanel(presetKey);
+      saveState();
+    }
+
+    function clearPattern() {
+      trackOrder.forEach((trackName) => {
+        patterns[trackName] = new Array(totalSteps).fill(0);
+        syncButtons(trackName);
+      });
+      saveState();
+    }
+
+    function renderPresets() {
+      const groupedPresets = Object.entries(presets).reduce((accumulator, [key, preset]) => {
+        const groupKey = preset.section || 'General';
+        if (!accumulator[groupKey]) {
+          accumulator[groupKey] = [];
+        }
+
+        accumulator[groupKey].push([key, preset]);
+        return accumulator;
+      }, {});
+
+      Object.entries(groupedPresets).forEach(([level, items]) => {
+        const group = document.createElement('optgroup');
+        group.label = level;
+
+        items.forEach(([key, preset]) => {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = `${preset.label} · ${preset.level || 'General'}`;
+          group.appendChild(option);
+        });
+
+        presetSelect.appendChild(group);
+      });
+
+      presetSelect.value = 'marcacao';
+    }
+
+    function setEditingLocked(locked) {
+      isEditingLocked = locked;
+      Object.values(tracks).forEach((track) => {
+        track.buttons.forEach((button) => {
+          button.disabled = locked;
+        });
+      });
+
+      if (isPracticeMode && locked) {
+        updatePracticeLapCounter(1, 1);
+        setPracticeStatus('Escuchá una vuelta completa antes de editar', false);
+        return;
+      }
+
+      if (isPracticeMode) {
+        updatePracticeLapCounter(1, 1);
+        setPracticeStatus('Ya podés editar y probar cambios', true);
+        return;
+      }
+
+      updatePracticeLapCounter(0, 1);
+      setPracticeStatus('Edición libre', true);
+    }
+
+    function setPracticeMode(enabled) {
+      isPracticeMode = enabled;
+      practiceModeButton.classList.toggle('is-active', enabled);
+      practiceModeButton.setAttribute('aria-pressed', String(enabled));
+      practiceModeButton.textContent = enabled ? 'Modo práctica: encendido' : 'Modo práctica: apagado';
+
+      if (!enabled) {
+        setEditingLocked(false);
+      } else if (!isPlaying) {
+        setPracticeStatus('Activado: al darle play se bloquea una vuelta', false);
+      }
+
+      saveState();
+    }
+
+    function exportPattern() {
+      const exported = JSON.stringify(captureSequencerState(), null, 2);
+      patternExchange.value = exported;
+      patternExchange.focus();
+      patternExchange.select();
+      setExchangeStatus('Patrón exportado al cuadro de texto', true);
+    }
+
+    function saveNamedPattern() {
+      const name = namedPatternInput.value.trim();
+
+      if (!name) {
+        setExchangeStatus('Escribí un nombre antes de guardar', false);
+        return;
+      }
+
+      namedPatternLibrary[name] = captureSequencerState();
+      savePatternLibrary();
+      renderNamedPatternLibrary();
+      namedPatternSelect.value = name;
+      setExchangeStatus('Patrón guardado en la biblioteca local', true);
+    }
+
+    function loadNamedPattern() {
+      const selectedName = namedPatternSelect.value;
+
+      if (!selectedName || !namedPatternLibrary[selectedName]) {
+        setExchangeStatus('Elegí un patrón guardado para cargar', false);
+        return;
+      }
+
+      applyStoredState(namedPatternLibrary[selectedName]);
+      namedPatternInput.value = selectedName;
+      saveState();
+      setExchangeStatus('Patrón guardado cargado', true);
+    }
+
+    function deleteNamedPattern() {
+      const selectedName = namedPatternSelect.value;
+
+      if (!selectedName || !namedPatternLibrary[selectedName]) {
+        setExchangeStatus('No hay patrón guardado seleccionado', false);
+        return;
+      }
+
+      delete namedPatternLibrary[selectedName];
+      savePatternLibrary();
+      renderNamedPatternLibrary();
+      namedPatternInput.value = '';
+      setExchangeStatus('Patrón eliminado de la biblioteca local', true);
+    }
+
+    async function copyExportedPattern() {
+      if (!patternExchange.value.trim()) {
+        exportPattern();
+      }
+
+      try {
+        await navigator.clipboard.writeText(patternExchange.value);
+        setExchangeStatus('JSON copiado al portapapeles', true);
+      } catch (error) {
+        setExchangeStatus('No se pudo copiar; usá el texto del cuadro', false);
+      }
+    }
+
+    function importPattern() {
+      const rawValue = patternExchange.value.trim();
+
+      if (!rawValue) {
+        setExchangeStatus('Pegá un JSON antes de importar', false);
+        return;
+      }
+
+      try {
+        const imported = JSON.parse(rawValue);
+        applyStoredState(imported);
+        saveState();
+        setExchangeStatus('Patrón importado correctamente', true);
+      } catch (error) {
+        setExchangeStatus('JSON inválido: revisá el contenido pegado', false);
+      }
+    }
+
+    function setBpm(value) {
+      bpmValue.textContent = value;
+      bpmSlider.value = value;
+      Tone.Transport.bpm.rampTo(value, 0.08);
+      saveState();
+    }
+
+    function setSwing(value) {
+      const safeValue = Math.max(0, Math.min(40, value));
+      swingSlider.value = safeValue;
+      swingValue.textContent = safeValue;
+      saveState();
+    }
+
+    function setTrackVolume(trackName, percent) {
+      const track = tracks[trackName];
+      const safePercent = Math.max(0, Math.min(100, percent));
+      const decibels = safePercent === 0 ? -60 : Tone.gainToDb(safePercent / 100);
+
+      track.synth.volume.value = decibels;
+      track.volumeSlider.value = safePercent;
+      track.volumeValue.textContent = `${safePercent}%`;
+      saveState();
+    }
+
+    function setTrackMuted(trackName, muted) {
+      const track = tracks[trackName];
+      track.isMuted = muted;
+      track.synth.volume.mute = muted;
+      track.muteButton.classList.toggle('is-muted', muted);
+      track.muteButton.setAttribute('aria-pressed', String(muted));
+      track.muteButton.textContent = muted ? 'Activar' : 'Mute';
+      saveState();
+    }
+
+    function applyStoredState(savedState) {
+      if (!savedState) {
+        return;
+      }
+
+      trackOrder.forEach((trackName) => {
+        if (savedState.patterns?.[trackName]?.length === totalSteps) {
+          patterns[trackName] = savedState.patterns[trackName].map(normalizePatternStep);
+        }
+
+        syncButtons(trackName);
+      });
+
+      if (typeof savedState.bpm === 'number') {
+        setBpm(Math.max(80, Math.min(150, savedState.bpm)));
+      }
+
+      if (typeof savedState.swing === 'number') {
+        setSwing(savedState.swing);
+      }
+
+      if (typeof savedState.signature === 'string') {
+        updateSignature(savedState.signature);
+      }
+
+      if (Array.isArray(savedState.accentSteps) && savedState.accentSteps.length) {
+        currentAccentSteps = savedState.accentSteps.filter((value) => Number.isInteger(value) && value >= 0 && value < totalSteps);
+        refreshStepVisuals();
+      }
+
+      if (typeof savedState.loopTrack === 'string' && tracks[savedState.loopTrack]) {
+        setLoopTrack(savedState.loopTrack);
+      } else {
+        setLoopTrack(null);
+      }
+
+      if (typeof savedState.isMetronomeEnabled === 'boolean') {
+        setMetronomeEnabled(savedState.isMetronomeEnabled);
+      }
+
+      if (typeof savedState.transitionPresetKey === 'string' && presets[savedState.transitionPresetKey]) {
+        transitionPresetKey = savedState.transitionPresetKey;
+      }
+
+      if (typeof savedState.isTapRecordEnabled === 'boolean') {
+        setTapRecordEnabled(savedState.isTapRecordEnabled);
+      }
+
+      if (typeof savedState.isTapPlaybackEnabled === 'boolean') {
+        setTapPlaybackEnabled(savedState.isTapPlaybackEnabled);
+      }
+
+      if (typeof savedState.tapReferenceTrackName === 'string' && tracks[savedState.tapReferenceTrackName]) {
+        tapReferenceTrackName = savedState.tapReferenceTrackName;
+        tapReferenceTrack.value = tapReferenceTrackName;
+        accuracyStatus.textContent = `Referencia: ${tapReferenceTrack.options[tapReferenceTrack.selectedIndex].textContent.replace('Comparar contra ', '')}`;
+      }
+
+      if (Array.isArray(savedState.lastRecordedTapPattern) && savedState.lastRecordedTapPattern.length === totalSteps) {
+        lastRecordedTapPattern = savedState.lastRecordedTapPattern.map((value) => value ? 1 : 0);
+        renderTapGrid();
+      }
+
+      if (Array.isArray(savedState.lastRecordedTapOffsets) && savedState.lastRecordedTapOffsets.length === totalSteps) {
+        lastRecordedTapOffsets = savedState.lastRecordedTapOffsets.map((value) => typeof value === 'number' ? value : null);
+      }
+
+      if (typeof savedState.isTransitionMode === 'boolean') {
+        setTransitionMode(savedState.isTransitionMode);
+      }
+
+      if (typeof savedState.practiceMode === 'boolean') {
+        setPracticeMode(savedState.practiceMode);
+      }
+
+      if (savedState.presetKey && presets[savedState.presetKey]) {
+        presetSelect.value = savedState.presetKey;
+        updateDidacticPanel(savedState.presetKey);
+      }
+
+      Object.entries(savedState.trackSettings || {}).forEach(([trackName, settings]) => {
+        if (!tracks[trackName]) {
+          return;
+        }
+
+        if (typeof settings.volume === 'number') {
+          setTrackVolume(trackName, settings.volume);
+        }
+
+        if (typeof settings.muted === 'boolean') {
+          setTrackMuted(trackName, settings.muted);
+        }
+      });
+    }
+
+    function blinkPulse(stepIndex) {
+      if (stepIndex % 4 !== 0) {
+        return;
+      }
+
+      pulseLed.classList.add('pulse');
+      pulseText.textContent = `Pulso ${Math.floor(stepIndex / 4) + 1} de ${getPlaybackBeatsPerBar()}`;
+      Array.from(pulseGuide.children).forEach((step, index) => {
+        step.classList.toggle('active', index === Math.floor(stepIndex / 4));
+      });
+
+      window.setTimeout(() => {
+        pulseLed.classList.remove('pulse');
+      }, 120);
+    }
+
+    function highlightColumn(stepIndex) {
+      Object.values(tracks).forEach((track) => {
+        track.buttons.forEach((button, index) => {
+          button.classList.toggle('playing', index === stepIndex);
+        });
+      });
+    }
+
+    function clearHighlights() {
+      Object.values(tracks).forEach((track) => {
+        track.buttons.forEach((button) => button.classList.remove('playing'));
+      });
+      Array.from(pulseGuide.children).forEach((step) => step.classList.remove('active'));
+      pulseLed.classList.remove('pulse');
+      pulseText.textContent = 'Esperando reproducción';
+    }
+
+    function stepForward(time) {
+      const stepIndex = currentStep;
+      const activeStepCount = getActiveStepCount();
+      const swingOffset = stepIndex % 2 === 1 ? Tone.Time('16n').toSeconds() * (Number(swingSlider.value) / 100) : 0;
+      const playbackTime = time + swingOffset;
+
+      if (stepIndex === 0 && isTapRecordEnabled) {
+        resetCurrentTapBuffer();
+        setTapStatus('Grabando taps en la vuelta actual', true);
+      }
+
+      if (isMetronomeEnabled && stepIndex % 4 === 0) {
+        const beatIndex = Math.floor(stepIndex / 4);
+        const note = beatIndex === 0 ? 'A5' : 'E5';
+        const velocity = beatIndex === 0 ? 0.95 : 0.5;
+        metronomeSynth.triggerAttackRelease(note, '32n', playbackTime, velocity);
+      }
+
+      const sourcePatterns = getPlaybackSourcePatterns();
+
+      trackOrder.forEach((trackName) => {
+        const track = tracks[trackName];
+        const stepValue = normalizePatternStep(sourcePatterns[trackName][stepIndex]);
+
+        if (stepValue > 0 && (!loopTrack || loopTrack === trackName)) {
+          track.trigger(playbackTime, stepValue === 2 ? 1 : 0.68);
+        }
+      });
+
+      if (isTapPlaybackEnabled && lastRecordedTapPattern[stepIndex]) {
+        tapSynth.triggerAttackRelease('C6', '32n', playbackTime, 0.6);
+      }
+
+      Tone.Draw.schedule(() => {
+        highlightColumn(stepIndex);
+        blinkPulse(stepIndex);
+
+        if (isPracticeMode && isEditingLocked && stepIndex === activeStepCount - 1) {
+          practiceLapProgress = 1;
+          updatePracticeLapCounter(practiceLapProgress, 1);
+          setEditingLocked(false);
+        }
+
+        if (stepIndex === activeStepCount - 1) {
+          if (currentBarTapPattern.some(Boolean)) {
+            lastRecordedTapPattern = [...currentBarTapPattern];
+            lastRecordedTapOffsets = [...currentBarTapOffsets];
+            renderTapGrid();
+            scoreCurrentBar();
+          } else if (isTapRecordEnabled) {
+            setTapStatus('Vuelta cerrada sin taps registrados', false);
+          }
+        }
+
+        if (stepIndex === activeStepCount - 1 && isTransitionMode) {
+          activeBarLabel = activeBarLabel === 'A' ? 'B' : 'A';
+          transitionStatus.textContent = `Barra activa: ${activeBarLabel} (${getPlaybackSignature()})`;
+          renderPulseGuide();
+          refreshStepVisuals();
+          renderTapGrid();
+        }
+      }, playbackTime);
+
+      currentStep = (currentStep + 1) % activeStepCount;
+    }
+
+    async function toggleTransport() {
+      if (!isPlaying) {
+        await Tone.start();
+
+        if (repeatId === null) {
+          repeatId = Tone.Transport.scheduleRepeat((time) => {
+            stepForward(time);
+          }, '16n');
+        }
+
+        currentStep = 0;
+        if (isPracticeMode) {
+          practiceLapProgress = 0;
+          updatePracticeLapCounter(practiceLapProgress, 1);
+          setEditingLocked(true);
+        }
+        Tone.Transport.start();
+        isPlaying = true;
+        transportButton.textContent = 'Stop';
+        pulseText.textContent = `Pulso 1 de ${getPlaybackBeatsPerBar()}`;
+        return;
+      }
+
+      Tone.Transport.stop();
+      Tone.Transport.cancel(0);
+      repeatId = null;
+      isPlaying = false;
+      currentStep = 0;
+      transportButton.textContent = 'Play';
+      if (isPracticeMode) {
+        setEditingLocked(false);
+      }
+      clearHighlights();
+    }
+
+    createCountRow();
+    renderSteps('surdo');
+    renderSteps('tamborim');
+    renderSteps('caixa');
+    renderSteps('agogo');
+    renderPresets();
+    renderTransitionPresets();
+    renderTapGrid();
+    loadPatternLibrary();
+    renderNamedPatternLibrary();
+    setTrackVolume('surdo', 85);
+    setTrackVolume('tamborim', 75);
+    setTrackVolume('caixa', 70);
+    setTrackVolume('agogo', 68);
+    setTrackMuted('surdo', false);
+    setTrackMuted('tamborim', false);
+    setTrackMuted('caixa', false);
+    setTrackMuted('agogo', false);
+    setBpm(Number(bpmSlider.value));
+    setSwing(0);
+    updateSignature('4/4');
+    setLoopTrack(null);
+    setMetronomeEnabled(false);
+    setTransitionMode(false);
+    updateDidacticPanel('marcacao');
+    setTapRecordEnabled(false);
+    setTapPlaybackEnabled(false);
+    setPracticeMode(false);
+    updatePracticeLapCounter(0, 1);
+    setExchangeStatus('Sin intercambio todavía', false);
+    accuracyStatus.textContent = 'Referencia: Surdo';
+
+    Tone.Transport.bpm.value = Number(bpmSlider.value);
+    Tone.Transport.loop = false;
+    applyStoredState(loadState());
+    isHydratingState = false;
+
+    transportButton.addEventListener('click', () => {
+      toggleTransport().catch((error) => {
+        console.error('No se pudo iniciar el audio:', error);
+        pulseText.textContent = 'El navegador bloqueó el audio';
+      });
+    });
+
+    bpmSlider.addEventListener('input', (event) => {
+      setBpm(Number(event.target.value));
+    });
+
+    swingSlider.addEventListener('input', (event) => {
+      setSwing(Number(event.target.value));
+    });
+
+    signatureSelect.addEventListener('change', (event) => {
+      updateSignature(event.target.value);
+    });
+
+    applyPresetButton.addEventListener('click', () => {
+      applyPreset(presetSelect.value);
+    });
+
+    clearPatternButton.addEventListener('click', () => {
+      clearPattern();
+    });
+
+    exportPatternButton.addEventListener('click', () => {
+      exportPattern();
+    });
+
+    downloadPatternButton.addEventListener('click', () => {
+      downloadJsonFile();
+    });
+
+    copyPatternButton.addEventListener('click', () => {
+      copyExportedPattern();
+    });
+
+    importPatternButton.addEventListener('click', () => {
+      importPattern();
+    });
+
+    openPatternButton.addEventListener('click', () => {
+      triggerFileImport();
+    });
+
+    saveNamedPatternButton.addEventListener('click', () => {
+      saveNamedPattern();
+    });
+
+    loadNamedPatternButton.addEventListener('click', () => {
+      loadNamedPattern();
+    });
+
+    deleteNamedPatternButton.addEventListener('click', () => {
+      deleteNamedPattern();
+    });
+
+    practiceModeButton.addEventListener('click', () => {
+      setPracticeMode(!isPracticeMode);
+    });
+
+    metronomeButton.addEventListener('click', () => {
+      setMetronomeEnabled(!isMetronomeEnabled);
+    });
+
+    transitionModeButton.addEventListener('click', () => {
+      setTransitionMode(!isTransitionMode);
+    });
+
+    transitionPresetSelect.addEventListener('change', (event) => {
+      transitionPresetKey = event.target.value;
+      saveState();
+    });
+
+    tapRecordButton.addEventListener('click', () => {
+      setTapRecordEnabled(!isTapRecordEnabled);
+    });
+
+    tapPlaybackButton.addEventListener('click', () => {
+      setTapPlaybackEnabled(!isTapPlaybackEnabled);
+    });
+
+    tapButton.addEventListener('click', () => {
+      recordTap();
+    });
+
+    clearTapsButton.addEventListener('click', () => {
+      clearRecordedTaps();
+    });
+
+    tapReferenceTrack.addEventListener('change', (event) => {
+      tapReferenceTrackName = event.target.value;
+      accuracyStatus.textContent = `Referencia: ${event.target.options[event.target.selectedIndex].textContent.replace('Comparar contra ', '')}`;
+      saveState();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.code !== 'Space' || event.repeat) {
+        return;
+      }
+
+      const targetTag = event.target.tagName;
+      if (targetTag === 'TEXTAREA' || targetTag === 'INPUT' || targetTag === 'SELECT') {
+        return;
+      }
+
+      event.preventDefault();
+      recordTap();
+    });
+
+    Object.entries(tracks).forEach(([trackName, track]) => {
+      track.loopButton.addEventListener('click', () => {
+        setLoopTrack(loopTrack === trackName ? null : trackName);
+      });
+
+      track.volumeSlider.addEventListener('input', (event) => {
+        setTrackVolume(trackName, Number(event.target.value));
+      });
+
+      track.muteButton.addEventListener('click', () => {
+        setTrackMuted(trackName, !track.isMuted);
+      });
+    });
+
+    saveState();
+  </script>
+</body>
+</html>
